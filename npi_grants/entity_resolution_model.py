@@ -1,3 +1,6 @@
+'''
+A reusable class that saves a classifier with associated metadata
+'''
 import os
 import json
 import datetime

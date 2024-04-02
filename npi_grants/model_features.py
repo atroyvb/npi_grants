@@ -1,43 +1,56 @@
-import jarowinkler 
-import pandas as pd 
-import numpy as np 
+import pandas as pd
+import numpy as np
+import jarowinkler
 # from sentence_transformers import SentenceTransformer
-
+# txts = df[col].to_list()
+# df[f'{col}_vec'] = model.embed(txts)
 
 class FeatureExtractor():
     def __init__(self):
-        # self.model = SentenceTransformer('sentence-transformers/all-MiniLM-L6v2')
-# 
-    def features(self, grantees: pd.DataFrame, 
-                 providers = pd.DataFrame) -> pd.Dataframe:
-        """Computer distance features from a pair of dataframes"""
-        cols_to_lowercase = ['forename','last_name','city','state']
+        # self.model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        pass
+
+    def features(self, 
+                 grantees: pd.DataFrame, 
+                 providers: pd.DataFrame) -> pd.DataFrame:
+        """Compute distance features from a pair of dataframes"""
+        cols_to_lowercase = ['forename', 'last_name', 'city', 'state']
         for col in cols_to_lowercase:
             grantees[col] = grantees[col].str.lower()
 
-        # if it's training data 
-        comb = pd.concat([grantees.add_suffix('_g'), providers.add_suffix('_p')], axis = 1)
+        # If it's training data
+        comb = pd.concat([grantees.add_suffix('_g'), providers.add_suffix('_p')], axis=1)
 
-        # if it's testing data  
+        # If it's testing data
         comb = grantees.add_suffix('_g').merge(providers.add_suffix('_p'), 
-                              how = 'outer', 
-                              left_on = 'last_name_g',
-                            right_on = 'last_name_p')
+                              how='outer',
+                              left_on='last_name_g',
+                              right_on='last_name_p')
+        
+        comb['jw_dist_forename'] = comb.apply(lambda row: jw_dist(row['forename_g'],
+                                                                  row['forename_p']), 
+                                                                  axis=1)  # Force row-by-row
+        comb['set_dist_forename'] = comb.apply(lambda row: set_dist(row['forename_g'],
+                                                                  row['forename_p']), 
+                                                                  axis=1)  # Force row-by-row
+        
+        comb['jw_dist_city'] = comb.apply(lambda row: jw_dist(row['city_g'],
+                                                                  row['city_p']), 
+                                                                  axis=1)  # Force row-by-row
+        comb['set_dist_city'] = comb.apply(lambda row: set_dist(row['city_g'],
+                                                                  row['city_p']), 
+                                                                  axis=1)  # Force row-by-row
+        
+        comb['jw_dist_state'] = comb.apply(lambda row: jw_dist(row['state_g'],
+                                                                  row['state_p']), 
+                                                                  axis=1)  # Force row-by-row
+        comb['set_dist_state'] = comb.apply(lambda row: set_dist(row['state_g'],
+                                                                  row['state_p']), 
+                                                                  axis=1)  # Force row-by-row
 
-        comb['jw_dist_forename'] = comb.apply(lambda row: jw_dist(row['forename_g'],
-                                                                  row['forename_p']),
-                                                                  axis = 1)
-        comb['jw_dist_forename'] = comb.apply(lambda row: jw_dist(row['forename_g'],
-                                                                  row['forename_p']),
-                                                                  axis = 1)
-        comb['jw_dist_forename'] = comb.apply(lambda row: jw_dist(row['forename_g'],
-                                                                  row['forename_p']),
-                                                                  axis = 1)
-        comb['jw_dist_forename'] = comb.apply(lambda row: jw_dist(row['forename_g'],
-                                                                  row['forename_p']),
-                                                                  axis = 1) 
-# txts = df[col].to_list()
-# df[f'{col}_vec'] = model.embed(txts)
+
+
+
 
 
 def jw_dist(v1: str, v2: str) -> float:
@@ -45,7 +58,7 @@ def jw_dist(v1: str, v2: str) -> float:
         return jarowinkler.jarowinkler_similarity(v1, v2)
     else:
         return np.nan
-    
+
 
 def set_dist(v1: str, v2: str) -> float:
     if isinstance(v1, str) and isinstance(v2, str):
