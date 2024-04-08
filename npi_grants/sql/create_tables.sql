@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS grantee (
+CREATE TABLE IF NOT EXISTS grants (
     id INTEGER PRIMARY KEY NOT NULL,
     application_id INTEGER NOT NULL,
     budget_start DATETIME,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS grantee (
     country VARCHAR(100)
 );
 
-CREATE TABLE IF NOT EXISTS provider (
+CREATE TABLE IF NOT EXISTS npi (
     id INTEGER PRIMARY KEY NOT NULL,
     npi INT NOT NULL,
     taxonomy_code VARCHAR(25),
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS provider (
 );
 
 -- The bridge table between grantees and providers
-CREATE TABLE IF NOT EXISTS grantee_provider (
+CREATE TABLE IF NOT EXISTS grants_npi (
     grantee_id INT NOT NULL,
     provider_id INT NOT NULL,
     FOREIGN KEY(grantee_id) REFERENCES grantee(id),

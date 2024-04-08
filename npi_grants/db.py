@@ -22,5 +22,5 @@ def create_db():
 
 def sql():
     """Return a connection to our SQL database"""
-    engine = sqlalchemy.create_engine('sqlite:///data/grant_npi.db')
+    engine = sqlalchemy.create_engine('sqlite:///data/grant_npi_1.db')
     return engine.connect()
