@@ -28,21 +28,9 @@ CREATE TABLE IF NOT EXISTS npi (
 
 -- The bridge table between grantees and providers
 CREATE TABLE IF NOT EXISTS grants_npi (
-    grantee_id INT NOT NULL,
-    provider_id INT NOT NULL,
-    FOREIGN KEY(grantee_id) REFERENCES grantee(id),
-    FOREIGN KEY(provider_id) REFERENCES provider(id),
-    UNIQUE(grantee_id, provider_id)
+    grants_id INT NOT NULL,
+    npi_id INT NOT NULL,
+    FOREIGN KEY(grants_id) REFERENCES grants(id),
+    FOREIGN KEY(npi_id) REFERENCES npi(id),
+    UNIQUE(grants_id, npi_id)
 );
-
-
-
-                 
-                 
-                 
-                 
-                 
-                 
-                 
-                 
-                 

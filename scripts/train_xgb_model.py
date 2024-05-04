@@ -1,6 +1,7 @@
 import pandas as pd 
 
-from npi_grants import db, model_features
+from npi_grants.db_files import db
+from npi_grants.mapping import model_features
 
 
 def create_training_data_features_labels():

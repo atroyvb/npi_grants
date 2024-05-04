@@ -1,12 +1,12 @@
 import pandas as pd
-from npi_grants import db, model_features
-
+from npi_grants.db_files import db
+from npi_grants.mapping import model_features
 
 def sample_last_names():
     """Get a sample of last names from both databases
     """
     df = pd.read_sql('''SELECT DISTINCT gr.last_name
-                        FROM grants gr
+                        FROM grantee gr
                         INNER JOIN provider pr
                             ON gr.last_name = pr.last_name
                         LIMIT 100;''', db.sql())
@@ -22,7 +22,7 @@ def get_probable_matches():
     names = ', '.join(sample['last_name'])
     query = f'''SELECT id, forename, last_name, 
                         organization, city, state, country
-                FROM grants
+                FROM grantee
                 WHERE last_name IN ({names})'''
     grantees = (pd.read_sql(query, db.sql())
                    .add_prefix('g_')
@@ -34,7 +34,7 @@ def get_probable_matches():
     # providers = pd.read_sql(query, db.sql()).add_prefix('p_')
     query = f'''SELECT id AS p_id, last_name, forename AS p_forename, city AS p_city, 
                 state AS p_state, country AS p_country
-                FROM npi
+                FROM provider
                 WHERE last_name IN ({names})'''
     providers = pd.read_sql(query, db.sql())
 

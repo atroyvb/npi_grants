@@ -1,46 +1,29 @@
 import pandas as pd
 
 
-class NPIReader():
-    def __init__(self, path: str):
-        """Pass in path to NIH grants file to clean and read"""
-        self.df = self._read(path)
-
-    def to_db(self, con):
-        """Send the data to a database via a SQLAlchemy connection"""
-        self.df.to_sql('provider',
-                       con,
-                       if_exists='append',
-                       index=False)
-
-    def _read(self, path: str):
-        """Read in a grants NIH file and return a clean dataframe"""
-        df = pd.read_csv(path)
-        df = df.rename(columns={
+def read(path: str) -> pd.DataFrame:
+    """Read in NPI data and rename columns"""
+    df = pd.read_csv(path)
+    mapper = {
             'NPI': 'npi',
             'Healthcare Provider Taxonomy Code_1': 'taxonomy_code',
             'Provider Last Name (Legal Name)': 'last_name',
             'Provider First Name': 'forename',
             'Provider First Line Business Practice Location Address': 'address',
             'Certification Date': 'cert_date',
-            'Provider Business Practice Location Address City Name': 'city',
+            'Provider Business Practice Location Address State Name': 'city',
             'Provider Business Practice Location Address State Name': 'state',
             'Provider Business Practice Location Address Country Code (If outside U.S.)': 'country'
- 
-        })
-        df = df[['npi',
-                 'taxonomy_code',
-                 'last_name',
-                 'forename',
-                 'address',
-                 'cert_date',
-                 'city',
-                 'state',
-                 'country']]
-        df = df.dropna(subset=['last_name'])
-        return df
+        }
     
+    df = df.rename(columns=mapper)[mapper.values()]
+    return df
+
+    #There are 850 missing values for taxonomy_code, address, state, and country
+    #There are 6,259 missing last names and 6,262 missing first names
+    #There are 1,505 missing values for cert_date
+
 
 if __name__ == '__main__':
-    reader = NPIReader('data/npidata_pfile_20240205-20240211.csv')
-    print(reader.df)
+    df = read('data/npidata_pfile_20240422-20240428.csv')
+    print(df.head())

@@ -1,22 +1,32 @@
 import pandas as pd
+from typing import Union
 
-
-class GrantReader():
+class GrantsReader:
     def __init__(self, path: str):
-        """Pass in path to NIH grants file to clean and read"""
-        self.df = self._read(path)
+        self.df = pd.read_csv(path)
 
-    def to_db(self, con):
-        """Send the data to a database via a SQLAlchemy connection"""
-        self.df.to_sql('grantee',
-                       con,
-                       if_exists='append',
-                       index=False)
+    def read(self) -> pd.DataFrame:
+        """Returns a cleaned dataframe"""
+        df = self._select_columns(self.df)
+        df = self._clean(df)
+        # Data can have NaNs
+        # Different types (reasonable)
+        # Different types (unreasonable)
+        return df
 
-    def _read(self, path: str):
-        """Read in a grants NIH file and return a clean dataframe"""
-        df = pd.read_csv(path)
-        df = df.rename(columns={
+    @staticmethod
+    def _select_columns(df: pd.DataFrame) -> pd.DataFrame:
+        """Rename and select columns
+        NOTE: Underscored methods are "private methods", otherwise 
+        meaning that we should only call them from WITHIN the class.
+
+        Args:
+            df (pd.DataFrame): dataframe
+
+        Returns:
+            pd.DataFrame: the subset, clean name dataframe
+        """
+        mapper = {
             'APPLICATION_ID': 'application_id',
             'BUDGET_START': 'budget_start',
             'ACTIVITY': 'grant_type',
@@ -27,40 +37,51 @@ class GrantReader():
             'ORG_CITY': 'city',
             'ORG_STATE': 'state',
             'ORG_COUNTRY': 'country'
-        })
-
-        df = self._clean(df)
-        df = df[['application_id',
-                 'budget_start',
-                 'grant_type',
-                 'total_cost',
-                 'organization',
-                 'city',
-                 'state',
-                 'country',
-                 'forename',
-                 'last_name',
-                 'is_contact']]
-        return df
+        }
+        return df.rename(columns=mapper)[mapper.values()]
     
-    def _clean(self, df: pd.DataFrame):
-        """Clean up the data"""
-        # Split apart pi names and make new rows with a single name in each
+    @staticmethod
+    def _clean(df: pd.DataFrame) -> pd.DataFrame:
+        """Remove NaNs and other cleaning functions
+
+        Args:
+            df (pd.DataFrame): dataframe with subset column names
+
+        Returns:
+            pd.DataFrame: dataframe free of NaNs
+        """
         df['pi_names'] = df['pi_names'].str.split(';')
         df = df.explode('pi_names')
-
-        # Pull out if the person is the contact
-        df['is_contact'] = df['pi_names'].str.lower().str.contains('(contact)', regex=False)
+        df['is_contact'] = df['pi_names'].str.lower().str.contains('(contact)')
         df['pi_names'] = df['pi_names'].str.replace('(contact)', '')
-
-        # Split apart last and firstnames
         df['both_names'] = df['pi_names'].apply(lambda x: x.split(',')[:2])
-        df['last_name'] = df['both_names'].apply(lambda x: x[0])
-        df['forename'] = df['both_names'].apply(lambda x: x[1])
-
+        df[['last_name', 'forename']] = pd.DataFrame(df['both_names'].to_list(), index=df.index)
         return df
-    
+
+        
+
+
+
+def read_grants_year(year: Union[int, str]) -> pd.DataFrame:
+    """Read in Grants Data for a year and return as clean dataframe
+
+    Args:
+        year (int | str): year to read
+
+    Returns:
+        pd.DataFrame: clean dataframe of grants data
+    """
+    # We know the filename is: RePORTER_PRJ_C_FY2022.zip
+    path = "data/RePORTER_PRJ_C_FY2022.csv"
+    gd = GrantsReader(path.format(year=year))
+    return gd.read()
+
+
 
 if __name__ == '__main__':
-    reader = GrantReader('data/RePORTER_PRJ_C_FY2022.csv')
-    print(reader.df)
+    import numpy as np
+
+    df = read_grants_year(2022)
+    print(df)
+    # gd = GrantsData()
+    
